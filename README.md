@@ -13,7 +13,7 @@ and sample-playback.
 * **`miniaudio`-native**: implements the `ma_data_source` interface, allowing you to drop it directly into a node graph.
 * **Hacking is Fun**: let's get along.
 
-## The Public Interface
+## The Public Interface (incomplete... WIP)
 
 | Function | Description |
 | :--- | :--- |
