@@ -63,13 +63,15 @@ signals through different effect paths without stopping the audio thread.
 
 The included `main.c` provides a real-time environment to test these connections.
 
-### Example: The Pulsing Filter-Sweep
+### Build it
 
 ```bash
 # on Linux... macOS and MSWindows coming soon...
 make
 ./skred_demo
 ```
+
+### Try it (enter these at the `skred >` REPL)
 
 ```
 v 0           # Select voice 0
