@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <signal.h>
 #include "uedit.h"
 
 #define WT_SIZE 4096
@@ -12,6 +13,14 @@
 #define WMAX 4
 #define WZED WMAX
 #define PI (3.14159265358979323846)
+
+/* Handle CTRL-C to restore terminal from raw mode safely */
+void handle_sigint(int sig) {
+    (void)sig;
+    uedit_disable_raw_mode();
+    printf("\nExiting Skred...\n");
+    exit(0);
+}
 
 /* --- Filter Node --- */
 typedef struct {
@@ -29,7 +38,8 @@ static void filter_node_process(ma_node* p_node, const float** pp_frames_in, ma_
 
     for (ma_uint32 i = 0; i < *p_frame_count_out; i++) {
         for (int c = 0; c < 2; c++) {
-            double x0 = p_in[i * 2 + c];
+            /* 1e-18 DC offset kills denormals instantly under -ffast-math */
+            double x0 = p_in[i * 2 + c] + 1e-18; 
             double y0 = p_f->b0 * x0 + p_f->b1 * p_f->x1[c] + p_f->b2 * p_f->x2[c] - p_f->a1 * p_f->y1[c] - p_f->a2 * p_f->y2[c];
             p_f->x2[c] = p_f->x1[c]; p_f->x1[c] = x0;
             p_f->y2[c] = p_f->y1[c]; p_f->y1[c] = y0;
@@ -40,6 +50,10 @@ static void filter_node_process(ma_node* p_node, const float** pp_frames_in, ma_
 static ma_node_vtable g_filter_vtable = { filter_node_process, NULL, 1, 1, 0 };
 
 void update_filter(skred_filter_node* p_f, float sr) {
+    /* Clamp resonance to prevent filter blowout */
+    if (p_f->resonance < 0.1f) p_f->resonance = 0.1f;
+    if (p_f->resonance > 20.0f) p_f->resonance = 20.0f;
+
     double omega = 2.0 * PI * p_f->cutoff / sr;
     double sn = sin(omega), cs = cos(omega), alpha = sn / (2.0 * p_f->resonance);
     double a0 = 1.0 + alpha;
@@ -77,6 +91,9 @@ static void delay_node_process(ma_node* p_node, const float** pp_frames_in, ma_u
 static ma_node_vtable g_delay_vtable = { delay_node_process, NULL, 1, 1, 0 };
 
 int main() {
+    signal(SIGINT, handle_sigint);
+    signal(SIGTERM, handle_sigint);
+
     ma_engine engine;
     ma_engine_config engineConfig = ma_engine_config_init();
     if (ma_engine_init(&engineConfig, &engine) != MA_SUCCESS) return -1;
@@ -140,7 +157,10 @@ int main() {
     }
 
     char line[256], cmd[32]; float f1, f2, f3, f4; int tmp, voice = 0;
-    while (uedit("skred > ", line, sizeof(line)) > 0) {
+    while (1) {
+        int r = uedit("stewartj@skred > ", line, sizeof(line));
+        if (r < 0) break;
+        if (r == 0) continue;
         if (sscanf(line, "%31s", cmd) != 1) continue;
         if (strcmp(cmd, "quit") == 0) break;
         if (strcmp(cmd, "v") == 0 && sscanf(line, "%*s %d", &tmp)) { if(tmp>=0 && tmp<VMAX) voice=tmp; }
