@@ -1,6 +1,11 @@
 #ifndef UEDIT_H
 #define UEDIT_H
 
+/* 
+  This is more octetta madness from http://github.com/octetta/uedit ...
+  check out the example/notes/doc/license (MIT) there.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

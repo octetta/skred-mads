@@ -1,8 +1,8 @@
 # `skred`-MADS
-**A Hacking Audio Engine for Hackers and Synthesists.**
+**An Audio Engine for Hackers and Synthesists.**
 
 `skred`-MADS is a minimalist digital signal processing (DSP) library built for
-miniaudio users who want to see a tricked-out data source for synthesizers
+`miniaudio` users who want to see a tricked-out data source for synthesizers
 and sample-playback.
 
 > A MA low-level synth engine I've been working on is [here](https://github.com/octetta/skred/#readme). `skred`-MADS does not implement the full set of `skred`-ey things (yet).
@@ -22,8 +22,9 @@ and sample-playback.
 | `skred_voice_set_adsr` | Manages the Attack, Decay, Sustain, and Release state machine. |
 | `skred_voice_set_lfo` | Assigns any wavetable as an LFO to modulate Freq, Vol, or Pan. |
 | `skred_voice_trig` | Bypasses the ADSR for instantaneous one-shot triggering. |
+| `...` | *look at `skred_ds.h` for more details* |
 
-## Wiring into the Miniaudio Graph
+## Wiring into the `miniaudio` Graph
 
 This data source is built for modularity. You don't just "play" a voice; you "wire" it.
 
@@ -36,7 +37,7 @@ ma_data_source_node_init(p_graph, &cfg, NULL, &voice_node);
 ### 2. Creating a Bus (The Mixer Node)
 
 To sum multiple voices into a single processing chain, use an ma_node
-as a summing bus. By default, miniaudio nodes sum all attached inputs.
+as a summing bus. By default, `miniaudio` nodes sum all attached inputs.
 
 ```c
 // Create a generic node to act as a Mixer/Bus
@@ -60,7 +61,7 @@ signals through different effect paths without stopping the audio thread.
 
 ## Modular REPL Demo
 
-The included main.c provides a real-time environment to test these connections.
+The included `main.c` provides a real-time environment to test these connections.
 
 ### Example: The Pulsing Filter-Sweep
 
