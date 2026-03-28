@@ -55,17 +55,17 @@ ma_node_attach_output_bus(&voice_node_2, 0, &mixer_bus, 0);
 ma_node_attach_output_bus(&mixer_bus, 0, &filter_node, 0);
 ```
 
-### 3. Dynamic Routing
+### 2. Dynamic Routing
 
-The route command in the REPL demonstrates real-time graph manipulations.
+The `route` command in the REPL demonstrates real-time graph manipulations.
 By detaching and re-attaching the output bus of a voice node, you can move
 signals through different effect paths without stopping the audio thread.
 
-## Modular REPL Demo
+### 3. Modular REPL Demo
 
 The included `main.c` provides a real-time environment to test these connections.
 
-### Build it
+#### Build it
 
 ```bash
 # on Linux... macOS and MSWindows coming soon...
@@ -73,7 +73,7 @@ make
 ./skred_demo
 ```
 
-### Try it (enter these at the `skred >` REPL)
+#### Try it (enter these at the `skred >` REPL)
 
 ```
 v 0           # Select voice 0
@@ -91,4 +91,4 @@ route delay   # Switch the routing to the stereo delay
 feed .5       # Change the delay feedback
 ```
 
-> Yo! I heard you like hacks, so I hacked hacks into your hacks so you can hack.
+> Yo! I heard you like synth-hacks, so I hacked hacks into your synth so you can synth while you hack.
