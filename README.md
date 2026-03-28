@@ -7,6 +7,8 @@ and sample-playback.
 
 ## Core Philosophies
 
+> A MA low-level synth engine I've been working on is [here](https://github.com/octetta/skred/#readme). `skred`-MADS does not implement the full set of `skred`-ey things (yet).
+
 * **Universal Data Sources**: In Skred, everything is a wavetable. Whether it’s a sine wave, a recorded kick drum, or a complex LFO shape, they are all governed by the same unified lookup logic.
 * **Miniaudio Native**: Skred implements the `ma_data_source` interface, allowing you to drop it directly into a node graph.
 
