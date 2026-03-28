@@ -1,7 +1,7 @@
-# Skred
+# `skred`-MADS
 **A Hacking Audio Engine for Hackers and Synthesists.**
 
-Skred is a minimalist digital signal processing (DSP) library built for
+`skred`-MADS is a minimalist digital signal processing (DSP) library built for
 miniaudio users who want to see a tricked-out data source for synthesizers
 and sample-playback.
 
@@ -51,7 +51,7 @@ ma_node_attach_output_bus(&mixer_bus, 0, &filter_node, 0);
 
 ### 3. Dynamic Routing
 
-The route command in the REPL demonstrates real-time graph manipulation.s
+The route command in the REPL demonstrates real-time graph manipulations.
 By detaching and re-attaching the output bus of a voice node, you can move
 signals through different effect paths without stopping the audio thread.
 
@@ -70,8 +70,8 @@ wave 1        # Set to Square wave
 adsr 500 200 0.8 1000
 on            # Trigger the note
 route filter  # Pipe it through the resonant filter
-cut 400       # Sweep the filter down
+cut 400       # Filter down
 route delay   # Switch the routing to the stereo delay
 ```
 
-> Created for the hacker who likes hacking the hacks for the hacks.
+> Yo! I heard you like hacks, so I hacked hacks into your hacks so you can hack.
