@@ -95,10 +95,28 @@ on            # Trigger the note
 route filter  # Pipe it through the resonant filter
 cut 400       # Filter down
 res 10        # Chane filter resonance
-lfo_wave 1    # Use square wave for LFO
-lfo 1 0 1 0   # Use LFO for amp at 1 Hz depth 1
+lfo_wave 0    # Use sine wave for LFO
+lfo 3 1 0 0   # Use LFO for amp at 1 Hz depth 1
 route delay   # Switch the routing to the stereo delay
 feed .5       # Change the delay feedback
+mix .4        # Change the delay mix
+off           # release note
+v 1           # Select voice 1
+wave 3        # Set to kick-drum "sample"
+freq 1 0      # Natural playback speed for sample
+trig          # Trigger it
+route delay   # Route to delay node
+vol 20 0      # Bump volume
+trig
+freq 2 0      # Double its playback speed
+trig
+freq .5 0     # Half playback speed
+trig
+route filter
+cut 30
+res 10
+trig          # Blam the kick
+quit          # Exit REPL
 ```
 The `route` command in the REPL demonstrates real-time graph manipulations.
 By detaching and re-attaching the output bus of a voice node, you can move

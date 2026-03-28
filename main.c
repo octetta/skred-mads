@@ -1,4 +1,3 @@
-//#define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
 #include "skred_ds.h"
 #include <stdio.h>
@@ -14,7 +13,7 @@
 #define WZED WMAX
 #define PI (3.14159265358979323846)
 
-/* Handle CTRL-C to restore terminal from raw mode safely */
+// Handle CTRL-C to restore terminal from raw mode safely
 void handle_sigint(int sig) {
     (void)sig;
     uedit_disable_raw_mode();
@@ -22,7 +21,7 @@ void handle_sigint(int sig) {
     exit(0);
 }
 
-/* --- Filter Node --- */
+// Filter Node
 typedef struct {
     ma_node_base base;
     double b0, b1, b2, a1, a2;
@@ -38,7 +37,7 @@ static void filter_node_process(ma_node* p_node, const float** pp_frames_in, ma_
 
     for (ma_uint32 i = 0; i < *p_frame_count_out; i++) {
         for (int c = 0; c < 2; c++) {
-            /* 1e-18 DC offset kills denormals instantly under -ffast-math */
+            // 1e-18 DC offset kills denormals instantly under -ffast-math
             double x0 = p_in[i * 2 + c] + 1e-18; 
             double y0 = p_f->b0 * x0 + p_f->b1 * p_f->x1[c] + p_f->b2 * p_f->x2[c] - p_f->a1 * p_f->y1[c] - p_f->a2 * p_f->y2[c];
             p_f->x2[c] = p_f->x1[c]; p_f->x1[c] = x0;
@@ -47,6 +46,7 @@ static void filter_node_process(ma_node* p_node, const float** pp_frames_in, ma_
         }
     }
 }
+
 static ma_node_vtable g_filter_vtable = { filter_node_process, NULL, 1, 1, 0 };
 
 void update_filter(skred_filter_node* p_f, float sr) {
@@ -57,11 +57,14 @@ void update_filter(skred_filter_node* p_f, float sr) {
     double omega = 2.0 * PI * p_f->cutoff / sr;
     double sn = sin(omega), cs = cos(omega), alpha = sn / (2.0 * p_f->resonance);
     double a0 = 1.0 + alpha;
-    p_f->b0 = ((1.0 - cs) / 2.0) / a0; p_f->b1 = (1.0 - cs) / a0; p_f->b2 = ((1.0 - cs) / 2.0) / a0;
-    p_f->a1 = (-2.0 * cs) / a0;       p_f->a2 = (1.0 - alpha) / a0;
+    p_f->b0 = ((1.0 - cs) / 2.0) / a0;
+    p_f->b1 = (1.0 - cs) / a0;
+    p_f->b2 = ((1.0 - cs) / 2.0) / a0;
+    p_f->a1 = (-2.0 * cs) / a0;
+    p_f->a2 = (1.0 - alpha) / a0;
 }
 
-/* --- Delay Node --- */
+// Delay Node
 #define DELAY_MAX_SAMPLES 88200 
 typedef struct {
     ma_node_base base;
@@ -90,7 +93,26 @@ static void delay_node_process(ma_node* p_node, const float** pp_frames_in, ma_u
 }
 static ma_node_vtable g_delay_vtable = { delay_node_process, NULL, 1, 1, 0 };
 
-int main() {
+void usage(void) {
+  printf("v <voice#>     : point to a voice (0 to %d)\n", VMAX-1);
+  printf("quit           : exit REPL\n");
+  printf("on             : perform note-on for voice\n");
+  printf("off            : perform note-off\n");
+  printf("stop           : stop voice\n");
+  printf("trig           : (re)start sample\n");
+  printf("wave <#>       : 0=sine 1=sqr 2=saw 3=kick\n");
+  printf("freq <hz> <n>  : start frequency in 'n' msec\n");
+  printf("adsr <attack-ms> <decay-ms> <sustain-level> <release-ms>\n");
+  printf("lfo <hz> <FM-depth> <AM-depth> <pan-mod-depth>\n");
+  printf("lfo_wave <#>   : same wave has\n");
+  printf("route [delay|filter|<blank>]  : choose where voice is routed\n");
+  printf("feed <amount>  : (delay route) how much feedback in delay\n");
+  printf("mix <amount>   : (delay route) how much mix in delay\n");
+  printf("cut <hz>       : (filter route) cut-off frequency\n");
+  printf("res <amount>   : (filter route) resonance amount (.707 is 'normal')\n");
+}
+
+int main(int argc, char *argv[]) {
     signal(SIGINT, handle_sigint);
     signal(SIGTERM, handle_sigint);
 
@@ -103,17 +125,21 @@ int main() {
     float *wd[WMAX+1];
     ma_uint32 ws[WMAX+1];
 
+    // build simple waveforms
     for (int n = 0; n < 3; n++) {
         wd[n] = malloc(WT_SIZE * sizeof(float));
         ws[n] = WT_SIZE;
         for (int i = 0; i < WT_SIZE; i++) {
             float t = (float)i / WT_SIZE;
-            if (n == 0) wd[n][i] = (float)sin(t * 2.0 * PI);
-            else if (n == 1) wd[n][i] = (t < 0.5) ? 1.0f : -1.0f;
-            else wd[n][i] = 2.0f * t - 1.0f;
+            if (n == 0) wd[n][i] = (float)sin(t * 2.0 * PI); // SINE
+            else if (n == 1) wd[n][i] = (t < 0.5) ? 1.0f : -1.0f; // SQUARE
+            else wd[n][i] = 2.0f * t - 1.0f; // SAW
         }
     }
+    // make an "empty" waveform
     wd[WMAX] = calloc(WT_SIZE, sizeof(float)); ws[WMAX] = WT_SIZE;
+    
+    // build a simple kick drum sample (2 seconds)
     #define DRUM 3
     ma_uint64 drum_frames = sr * 2;
     wd[DRUM] = calloc(drum_frames, sizeof(float));
@@ -125,25 +151,31 @@ int main() {
         ph += (60.0 + (100.0 * exp(-t * 10.0))) / sr;
     }
 
-    /* Effects */
+    // Effects
     ma_node_config effect_cfg = ma_node_config_init();
-    effect_cfg.inputBusCount = 1; effect_cfg.outputBusCount = 1;
-    effect_cfg.pInputChannels = &channels; effect_cfg.pOutputChannels = &channels;
+    effect_cfg.inputBusCount = 1;
+    effect_cfg.outputBusCount = 1;
+    effect_cfg.pInputChannels = &channels;
+    effect_cfg.pOutputChannels = &channels;
 
     skred_filter_node f_node = {0};
     effect_cfg.vtable = &g_filter_vtable;
     ma_node_init(ma_engine_get_node_graph(&engine), &effect_cfg, NULL, &f_node);
-    f_node.cutoff = 2000.0f; f_node.resonance = 0.707f; update_filter(&f_node, (float)sr);
+    f_node.cutoff = 2000.0f;
+    f_node.resonance = 0.707f;
+    update_filter(&f_node, (float)sr);
     ma_node_attach_output_bus(&f_node, 0, ma_engine_get_endpoint(&engine), 0);
 
     skred_delay_node d_node = {0};
     d_node.buffer = calloc(DELAY_MAX_SAMPLES * 2, sizeof(float));
-    d_node.delay_frames = sr / 2; d_node.feedback = 0.5f; d_node.mix = 0.3f;
+    d_node.delay_frames = sr / 2;
+    d_node.feedback = 0.5f;
+    d_node.mix = 0.3f;
     effect_cfg.vtable = &g_delay_vtable;
     ma_node_init(ma_engine_get_node_graph(&engine), &effect_cfg, NULL, &d_node);
     ma_node_attach_output_bus(&d_node, 0, ma_engine_get_endpoint(&engine), 0);
 
-    /* Voices */
+    // Voices
     skred_voice_t v[VMAX];
     ma_data_source_node v_node[VMAX];
     int wave[VMAX];
@@ -156,13 +188,19 @@ int main() {
         wave[i] = WZED;
     }
 
-    char line[256], cmd[32]; float f1, f2, f3, f4; int tmp, voice = 0;
+    printf("# skred-mads REPL v0.0.0 (? for commands)\n");
+    char line[256], cmd[32];
+    float f1, f2, f3, f4;
+    int tmp, voice = 0;
     while (1) {
-        int r = uedit("stewartj@skred > ", line, sizeof(line));
+        char ps[64];
+        sprintf(ps, "v %d > ", voice);
+        int r = uedit(ps, line, sizeof(line));
         if (r < 0) break;
         if (r == 0) continue;
         if (sscanf(line, "%31s", cmd) != 1) continue;
         if (strcmp(cmd, "quit") == 0) break;
+        if (strcmp(cmd, "?") == 0) { usage(); continue; }
         if (strcmp(cmd, "v") == 0 && sscanf(line, "%*s %d", &tmp)) { if(tmp>=0 && tmp<VMAX) voice=tmp; }
         else if (strcmp(cmd, "on") == 0) skred_voice_note_on(&v[voice]);
         else if (strcmp(cmd, "off") == 0) skred_voice_note_off(&v[voice]);
@@ -170,7 +208,8 @@ int main() {
         else if (strcmp(cmd, "trig") == 0) skred_voice_trig(&v[voice]);
         else if (strcmp(cmd, "wave") == 0 && sscanf(line, "%*s %d", &tmp)) {
             if (tmp>=0 && tmp<=WMAX && tmp!=wave[voice]) {
-                wave[voice]=tmp; skred_voice_set_sample(&v[voice], wd[tmp], ws[tmp], (tmp==DRUM));
+                wave[voice]=tmp;
+                skred_voice_set_sample(&v[voice], wd[tmp], ws[tmp], (tmp==DRUM));
             }
         }
         else if (strcmp(cmd, "freq") == 0 && sscanf(line, "%*s %f %f", &f1, &f2)) skred_voice_set_freq(&v[voice], f1, f2);
@@ -180,11 +219,19 @@ int main() {
         else if (strcmp(cmd, "adsr") == 0 && sscanf(line, "%*s %f %f %f %f", &f1, &f2, &f3, &f4)) skred_voice_set_adsr(&v[voice], f1, f2, f3, f4);
         else if (strcmp(cmd, "lfo") == 0 && sscanf(line, "%*s %f %f %f %f", &f1, &f2, &f3, &f4)) skred_voice_set_lfo(&v[voice], f1, f2, f3, f4);
         else if (strcmp(cmd, "lfo_wave") == 0 && sscanf(line, "%*s %d", &tmp)) { if(tmp>=0 && tmp<WMAX) skred_voice_set_lfo_wave(&v[voice], wd[tmp], ws[tmp]); }
-        else if (strcmp(cmd, "cut") == 0 && sscanf(line, "%*s %f", &f1)) { f_node.cutoff = f1; update_filter(&f_node, (float)sr); }
-        else if (strcmp(cmd, "res") == 0 && sscanf(line, "%*s %f", &f1)) { f_node.resonance = f1; update_filter(&f_node, (float)sr); }
+        else if (strcmp(cmd, "cut") == 0 && sscanf(line, "%*s %f", &f1)) {
+          f_node.cutoff = f1;
+          update_filter(&f_node, (float)sr);
+          }
+        else if (strcmp(cmd, "res") == 0 && sscanf(line, "%*s %f", &f1)) {
+          f_node.resonance = f1;
+          update_filter(&f_node, (float)sr);
+          }
         else if (strcmp(cmd, "feed") == 0 && sscanf(line, "%*s %f", &f1)) { d_node.feedback = f1; }
+        else if (strcmp(cmd, "mix") == 0 && sscanf(line, "%*s %f", &f1)) { d_node.mix = f1; }
         else if (strcmp(cmd, "route") == 0) {
-            char target[32]; sscanf(line, "%*s %31s", target);
+            char target[32];
+            sscanf(line, "%*s %31s", target);
             ma_node_detach_output_bus(&v_node[voice], 0);
             if (strcmp(target, "filter") == 0) ma_node_attach_output_bus(&v_node[voice], 0, &f_node, 0);
             else if (strcmp(target, "delay") == 0) ma_node_attach_output_bus(&v_node[voice], 0, &d_node, 0);

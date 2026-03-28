@@ -107,6 +107,7 @@ static int uedit(const char *prompt, char *buf, int max_line) {
                 else if (c == 'F')               { cur = len; }
                 else if (c == 'A' && uedit_last_cmd[0]) {
                     strncpy(buf, uedit_last_cmd, max_line - 1);
+                    printf(buf, max_line, "%s", uedit_last_cmd);
                     buf[max_line - 1] = '\0';
                     len = (int)strlen(buf); cur = len;
                 } else if (c == '3') {
@@ -129,8 +130,7 @@ static int uedit(const char *prompt, char *buf, int max_line) {
                 memmove(&buf[cur], &buf[cur + 1], len - cur - 1);
                 len--; buf[len] = '\0';
             } else if (c == 72 && uedit_last_cmd[0]) {     
-                // strncpy(buf, uedit_last_cmd, max_line - 1);
-                snprintf(buf, max_line, "%s", uedit_last_cmd);
+                strncpy(buf, uedit_last_cmd, max_line - 1);
                 buf[max_line - 1] = '\0';
                 len = (int)strlen(buf); cur = len;
             }

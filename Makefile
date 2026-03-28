@@ -1,6 +1,6 @@
 CC = gcc
-#CFLAGS = -Wall -Wextra -O3 -std=c99 -Wno-stringop-overflow
-CFLAGS = -Wall -Wextra -Ofast -march=native -ffast-math -Wno-stringop-overflow -std=c99
+CFLAGS = -Wall -Wextra -O3 -std=c99 -Wno-stringop-overflow
+#CFLAGS = -Wall -Wextra -Ofast -march=native -ffast-math -Wno-stringop-overflow -std=c99
 LDFLAGS = -lm -lpthread -ldl
 
 TARGET = skred_demo
