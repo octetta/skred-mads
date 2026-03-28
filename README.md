@@ -33,6 +33,12 @@ and sample-playback.
 | `skred_voice_trig` | Bypasses the ADSR for instantaneous one-shot triggering. |
 | `...` | *look at `skred_ds.h` for more details* |
 
+### 0. Look at `simple.c` for a pretty straight-forward example
+
+```bash
+make simple
+```
+
 ## Wiring into the `miniaudio` Graph
 
 This data source is built for modularity. You don't just "play" a voice; you "wire" it.
@@ -64,17 +70,11 @@ ma_node_attach_output_bus(&voice_node_2, 0, &mixer_bus, 0);
 ma_node_attach_output_bus(&mixer_bus, 0, &filter_node, 0);
 ```
 
-### 2. Dynamic Routing
-
-The `route` command in the REPL demonstrates real-time graph manipulations.
-By detaching and re-attaching the output bus of a voice node, you can move
-signals through different effect paths without stopping the audio thread.
-
 ### 3. Modular REPL Demo
 
 The included `main.c` provides a real-time environment to test these connections.
 
-#### 4. Build the REPL
+### 4. Build the REPL
 
 ```bash
 # on Linux... macOS and MSWindows coming soon...
@@ -82,7 +82,7 @@ make
 ./skred_demo
 ```
 
-#### 5. Try it (enter these at the `skred >` REPL)
+### 5. Try it (enter these at the `skred >` REPL)
 
 ```
 v 0           # Select voice 0
@@ -99,11 +99,8 @@ lfo 1 0 1 0   # Use LFO for amp at 1 Hz depth 1
 route delay   # Switch the routing to the stereo delay
 feed .5       # Change the delay feedback
 ```
-#### 6. Look at `simple.c` for a pretty straight-forward example
-
-```bash
-make simple
-```
-
+The `route` command in the REPL demonstrates real-time graph manipulations.
+By detaching and re-attaching the output bus of a voice node, you can move
+signals through different effect paths without stopping the audio thread.
 
 > Yo! I heard you like synth-hacks, so I hacked hacks into your synth so you can synth while you hack.
