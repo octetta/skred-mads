@@ -65,6 +65,12 @@ The included `main.c` provides a real-time environment to test these connections
 
 ### Example: The Pulsing Filter-Sweep
 
+```bash
+# on Linux... macOS and MSWindows coming soon...
+make
+./skred_demo
+```
+
 ```
 v 0           # Select voice 0
 freq 440 0    # Set freq NOW
