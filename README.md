@@ -5,12 +5,13 @@
 miniaudio users who want to see a tricked-out data source for synthesizers
 and sample-playback.
 
-## Core Philosophies
-
 > A MA low-level synth engine I've been working on is [here](https://github.com/octetta/skred/#readme). `skred`-MADS does not implement the full set of `skred`-ey things (yet).
 
-* **Universal Data Sources**: In Skred, everything is a wavetable. Whether it’s a sine wave, a recorded kick drum, or a complex LFO shape, they are all governed by the same unified lookup logic.
-* **Miniaudio Native**: Skred implements the `ma_data_source` interface, allowing you to drop it directly into a node graph.
+## Core Philosophies
+
+* **Universal Data Sources**: everything is a wavetable. Whether it’s a sine wave, a recorded kick drum, or a complex LFO shape, they are all governed by the same unified lookup logic.
+* **`miniaudio`-native**: implements the `ma_data_source` interface, allowing you to drop it directly into a node graph.
+* **Hacking is Fun**: let's get along.
 
 ## The Public Interface
 
@@ -24,7 +25,7 @@ and sample-playback.
 
 ## Wiring into the Miniaudio Graph
 
-Skred is built for modularity. You don't just "play" a voice; you "wire" it.
+This data source is built for modularity. You don't just "play" a voice; you "wire" it.
 
 ### 1. Simple Node Attachment
 Wrap your Skred voice in an `ma_data_source_node` so the graph can talk to it:
@@ -57,7 +58,6 @@ The route command in the REPL demonstrates real-time graph manipulations.
 By detaching and re-attaching the output bus of a voice node, you can move
 signals through different effect paths without stopping the audio thread.
 
-
 ## Modular REPL Demo
 
 The included main.c provides a real-time environment to test these connections.
@@ -73,7 +73,11 @@ adsr 500 200 0.8 1000
 on            # Trigger the note
 route filter  # Pipe it through the resonant filter
 cut 400       # Filter down
+res 10        # Chane filter resonance
+lfo_wave 1    # Use square wave for LFO
+lfo 1 0 1 0   # Use LFO for amp at 1 Hz depth 1
 route delay   # Switch the routing to the stereo delay
+feed .5       # Change the delay feedback
 ```
 
 > Yo! I heard you like hacks, so I hacked hacks into your hacks so you can hack.
