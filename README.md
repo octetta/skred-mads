@@ -1,4 +1,4 @@
-<img src="badear.png"> width="200">
+<img src="badear.png" width="200">
 
 # `skred`-MADS
 **An Audio Engine for Hackers and Synthesists.**
