@@ -20,9 +20,16 @@ and sample-playback.
 | Function | Description |
 | :--- | :--- |
 | `skred_voice_init` | Initializes a voice with a buffer and binds it to the hardware sample rate. |
+| `skred_voice_set_sample` | Assign wavetable to voice |
 | `skred_voice_set_freq` | Sets target frequency with millisecond-accurate linear ramping. |
 | `skred_voice_set_adsr` | Manages the Attack, Decay, Sustain, and Release state machine. |
-| `skred_voice_set_lfo` | Assigns any wavetable as an LFO to modulate Freq, Vol, or Pan. |
+| `skred_voice_set_lfo` | Use LFO to modulate Freq, Vol, or Pan. |
+| `skred_voice_set_lfo_wave` | Assigns wavetable to an LFO |
+| `skred_voice_set_pan` | Set voice panning |
+| `skred_voice_set_vol` | Set voice volume |
+| `skred_voice_note_on` | Begin ADSR attack |
+| `skred_voice_note_off` | Start ADSR release |
+| `skred_voice_stop` | Stop voice |
 | `skred_voice_trig` | Bypasses the ADSR for instantaneous one-shot triggering. |
 | `...` | *look at `skred_ds.h` for more details* |
 
