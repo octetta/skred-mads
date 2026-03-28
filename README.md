@@ -1,19 +1,19 @@
 <img src="badear.png" width="100">
 
-# `skred`-MADS
-**An Audio Engine for Hackers and Synthesists.**
+# `skred-mads`
+**A Sound Engine for Hackers and Synthesists.**
 
-`skred`-MADS is a minimalist digital signal processing (DSP) library built for
-`miniaudio` users who want to see a tricked-out data source for synthesizers
-and sample-playback.
+`skred-mads` is for `miniaudio` users who want data source for synthesizers
+and sample-playback with real-time control capabilities.
 
-> A MA low-level synth engine I've been working on is [here](https://github.com/octetta/skred/#readme). `skred`-MADS does not implement the full set of `skred`-ey things (yet).
+> A MA low-level synth engine I've been working on is [here](https://github.com/octetta/skred/#readme).
+> `skred-mads` does not implement the full set of `skred`-ey things (yet).
 
 ## Core Philosophies
 
 * **Universal Data Sources**: everything is a wavetable. Whether it’s a sine wave, a recorded kick drum, or a complex LFO shape, they are all governed by the same unified lookup logic.
 * **`miniaudio`-native**: implements the `ma_data_source` interface, allowing you to drop it directly into a node graph.
-* **Hacking is Fun**: let's get along.
+* **Hacking is Fun**: let's get along and make cool sound things.
 
 ## The Public Interface (incomplete... WIP)
 
@@ -21,12 +21,12 @@ and sample-playback.
 | :--- | :--- |
 | `skred_voice_init` | Initializes a voice with a buffer and binds it to the hardware sample rate. |
 | `skred_voice_set_sample` | Assign wavetable to voice |
-| `skred_voice_set_freq` | Sets target frequency with millisecond-accurate linear ramping. |
+| `skred_voice_set_freq` | Sets target frequency with linear ramping. |
 | `skred_voice_set_adsr` | Manages the Attack, Decay, Sustain, and Release state machine. |
 | `skred_voice_set_lfo` | Use LFO to modulate Freq, Vol, or Pan. |
 | `skred_voice_set_lfo_wave` | Assigns wavetable to an LFO |
-| `skred_voice_set_pan` | Set voice panning |
-| `skred_voice_set_vol` | Set voice volume |
+| `skred_voice_set_pan` | Set voice panning with variable pan ramping |
+| `skred_voice_set_vol` | Set voice volume with variable volume ramping |
 | `skred_voice_note_on` | Begin ADSR attack |
 | `skred_voice_note_off` | Start ADSR release |
 | `skred_voice_stop` | Stop voice |
@@ -37,6 +37,7 @@ and sample-playback.
 
 ```bash
 make simple
+./simple  # starts MA, attaches a sine voice, etc...
 ```
 
 ## Wiring into the `miniaudio` Graph
