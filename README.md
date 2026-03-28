@@ -39,9 +39,11 @@ This data source is built for modularity. You don't just "play" a voice; you "wi
 
 ### 1. Simple Node Attachment
 Wrap your Skred voice in an `ma_data_source_node` so the graph can talk to it:
+
 ```c
 ma_data_source_node_config cfg = ma_data_source_node_config_init(&my_skred_voice);
 ma_data_source_node_init(p_graph, &cfg, NULL, &voice_node);
+```
 
 ### 2. Creating a Bus (The Mixer Node)
 
@@ -72,7 +74,7 @@ signals through different effect paths without stopping the audio thread.
 
 The included `main.c` provides a real-time environment to test these connections.
 
-#### Build it
+#### 4. Build the REPL
 
 ```bash
 # on Linux... macOS and MSWindows coming soon...
@@ -80,7 +82,7 @@ make
 ./skred_demo
 ```
 
-#### Try it (enter these at the `skred >` REPL)
+#### 5. Try it (enter these at the `skred >` REPL)
 
 ```
 v 0           # Select voice 0
@@ -97,5 +99,11 @@ lfo 1 0 1 0   # Use LFO for amp at 1 Hz depth 1
 route delay   # Switch the routing to the stereo delay
 feed .5       # Change the delay feedback
 ```
+#### 6. Look at `simple.c` for a pretty straight-forward example
+
+```bash
+make simple
+```
+
 
 > Yo! I heard you like synth-hacks, so I hacked hacks into your synth so you can synth while you hack.
