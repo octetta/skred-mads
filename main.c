@@ -93,8 +93,8 @@ static void delay_node_process(ma_node* p_node, const float** pp_frames_in, ma_u
 }
 static ma_node_vtable g_delay_vtable = { delay_node_process, NULL, 1, 1, 0 };
 
-void usage(void) {
-  printf("v <voice#>      : point to a voice (0 to %d)\n", VMAX-1);
+void usage(int vmax) {
+  printf("v <voice#>      : point to a voice (0 to %d)\n", vmax-1);
   printf("quit            : exit REPL\n");
   printf("on              : perform note-on for voice\n");
   printf("off             : perform note-off\n");
@@ -129,6 +129,25 @@ int main(int argc, char *argv[]) {
     if (ma_engine_init(&engineConfig, &engine) != MA_SUCCESS) return -1;
     ma_uint32 sr = ma_engine_get_sample_rate(&engine);
     ma_uint32 channels = 2;
+
+    int vmax = VMAX;
+    
+    if (argc > 1) {
+        for (int i=1; i<argc; i++) {
+            if (argv[i][0] == '-') {
+                switch (argv[i][1]) {
+                    case 'v':
+                      vmax = atoi(&argv[i][2]);
+                      if (vmax < 1) vmax = VMAX;
+                      break;
+                    default:
+                      break;
+                }
+            }
+        }
+    }
+
+    printf("# vmax = %d\n", vmax);
 
     float *wd[WMAX+1];
     ma_uint32 ws[WMAX+1];
@@ -183,11 +202,12 @@ int main(int argc, char *argv[]) {
     ma_node_init(ma_engine_get_node_graph(&engine), &effect_cfg, NULL, &d_node);
     ma_node_attach_output_bus(&d_node, 0, ma_engine_get_endpoint(&engine), 0);
 
+
     // Voices
-    skred_voice_t v[VMAX];
-    ma_data_source_node v_node[VMAX];
-    int wave[VMAX];
-    for (int i = 0; i < VMAX; i++) {
+    skred_voice_t *v = (skred_voice_t*)calloc(vmax, sizeof(skred_voice_t));
+    ma_data_source_node *v_node = (ma_data_source_node*)calloc(vmax, sizeof(ma_data_source_node));
+    int *wave = (int*)calloc(vmax, sizeof(int*));
+    for (int i = 0; i < vmax; i++) {
         skred_voice_init(sr, wd[WZED], ws[WZED], sr, (double)sr/WT_SIZE, &v[i]);
         ma_data_source_node_config vn_cfg = ma_data_source_node_config_init(&v[i]);
         ma_data_source_node_init(ma_engine_get_node_graph(&engine), &vn_cfg, NULL, &v_node[i]);
@@ -198,7 +218,10 @@ int main(int argc, char *argv[]) {
 
     printf("# skred-mads REPL v0.0.0 (? for commands)\n");
     char line[256], cmd[32];
-    float f1[VMAX], f2[VMAX], f3[VMAX], f4[VMAX];
+    float *f1 = (float*)calloc(vmax, sizeof(float*));
+    float *f2 = (float*)calloc(vmax, sizeof(float*));
+    float *f3 = (float*)calloc(vmax, sizeof(float*));
+    float *f4 = (float*)calloc(vmax, sizeof(float*));
     int tmp, voice = 0;
     while (1) {
         char ps[128];
@@ -208,8 +231,8 @@ int main(int argc, char *argv[]) {
         if (r == 0) continue;
         if (sscanf(line, "%31s", cmd) != 1) continue;
         if (strcmp(cmd, "quit") == 0) break;
-        if (strcmp(cmd, "?") == 0) { usage(); continue; }
-        if (strcmp(cmd, "v") == 0 && sscanf(line, "%*s %d", &tmp)) { if(tmp>=0 && tmp<VMAX) voice=tmp; }
+        if (strcmp(cmd, "?") == 0) { usage(vmax); continue; }
+        if (strcmp(cmd, "v") == 0 && sscanf(line, "%*s %d", &tmp)) { if(tmp>=0 && tmp<vmax) voice=tmp; }
         else if (strcmp(cmd, "on") == 0) skred_voice_note_on(&v[voice]);
         else if (strcmp(cmd, "off") == 0) skred_voice_note_off(&v[voice]);
         else if (strcmp(cmd, "stop") == 0) skred_voice_stop(&v[voice]);
@@ -248,7 +271,17 @@ int main(int argc, char *argv[]) {
         }
     }
     ma_engine_uninit(&engine);
-    for (int i=0; i<=WMAX; i++) free(wd[i]);
+    for (int i=0; i<=WMAX; i++) {
+      free(wd[i]);
+    }
     free(d_node.buffer);
+    free(v);
+    free(v_node);
+    free(wave);
+    free(f1);
+    free(f2);
+    free(f3);
+    free(f4);
+
     return 0;
 }
