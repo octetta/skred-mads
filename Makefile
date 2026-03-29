@@ -20,8 +20,8 @@ skred_ds.o: skred_ds.c skred_ds.h miniaudio.h
 miniaudio.o: miniaudio.c miniaudio.h
 	$(CC) $(CFLAGS) -c miniaudio.c
 
-simple: simple.c
-	$(CC) $(CFLAGS) simple.c skred_ds.c -o simple $(LDFLAGS)
+simple: simple.c skred_ds.o miniaudio.o
+	$(CC) $(CFLAGS) simple.c skred_ds.o miniaudio.o -o simple -lm
 
 clean:
 	rm -f $(OBJS) $(TARGET)
