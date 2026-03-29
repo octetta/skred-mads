@@ -94,22 +94,30 @@ static void delay_node_process(ma_node* p_node, const float** pp_frames_in, ma_u
 static ma_node_vtable g_delay_vtable = { delay_node_process, NULL, 1, 1, 0 };
 
 void usage(void) {
-  printf("v <voice#>     : point to a voice (0 to %d)\n", VMAX-1);
-  printf("quit           : exit REPL\n");
-  printf("on             : perform note-on for voice\n");
-  printf("off            : perform note-off\n");
-  printf("stop           : stop voice\n");
-  printf("trig           : (re)start sample\n");
-  printf("wave <#>       : 0=sine 1=sqr 2=saw 3=kick\n");
-  printf("freq <hz> <n>  : start frequency in 'n' msec\n");
+  printf("v <voice#>      : point to a voice (0 to %d)\n", VMAX-1);
+  printf("quit            : exit REPL\n");
+  printf("on              : perform note-on for voice\n");
+  printf("off             : perform note-off\n");
+  printf("stop            : stop voice\n");
+  printf("trig            : (re)start sample\n");
+  printf("wave <#>        : 0=sine 1=sqr 2=saw 3=kick\n");
+  printf("freq <hz> <n>   : goto frequency over 'n' msec\n");
+  printf("midi <note> <n> : goto midi-note # over 'n' msec\n");
   printf("adsr <attack-ms> <decay-ms> <sustain-level> <release-ms>\n");
   printf("lfo <hz> <FM-depth> <AM-depth> <pan-mod-depth>\n");
-  printf("lfo_wave <#>   : same wave has\n");
+  printf("lfo_wave <#>    : same wave has\n");
   printf("route [delay|filter|<blank>]  : choose where voice is routed\n");
-  printf("feed <amount>  : (delay route) how much feedback in delay\n");
-  printf("mix <amount>   : (delay route) how much mix in delay\n");
-  printf("cut <hz>       : (filter route) cut-off frequency\n");
-  printf("res <amount>   : (filter route) resonance amount (.707 is 'normal')\n");
+  printf("feed <amount>   : (delay route) how much feedback in delay\n");
+  printf("mix <amount>    : (delay route) how much mix in delay\n");
+  printf("cut <hz>        : (filter route) cut-off frequency\n");
+  printf("res <amount>    : (filter route) resonance amount (.707 is 'normal')\n");
+}
+
+double midi2hz(double midi_note, double cents) {
+    const double reference_pitch = 440.0;
+    const float reference_note = 69;
+    double fractional_note = (double)midi_note + (cents / 100.0);
+    return reference_pitch * pow(2.0, (fractional_note - reference_note) / 12.0);
 }
 
 int main(int argc, char *argv[]) {
@@ -190,11 +198,11 @@ int main(int argc, char *argv[]) {
 
     printf("# skred-mads REPL v0.0.0 (? for commands)\n");
     char line[256], cmd[32];
-    float f1, f2, f3, f4;
+    float f1[VMAX], f2[VMAX], f3[VMAX], f4[VMAX];
     int tmp, voice = 0;
     while (1) {
-        char ps[64];
-        sprintf(ps, "v %d > ", voice);
+        char ps[128];
+        sprintf(ps, "v %d (%g,%g,%g,%g))> ", voice, f1[voice], f2[voice], f3[voice], f4[voice]);
         int r = uedit(ps, line, sizeof(line));
         if (r < 0) break;
         if (r == 0) continue;
@@ -212,23 +220,24 @@ int main(int argc, char *argv[]) {
                 skred_voice_set_sample(&v[voice], wd[tmp], ws[tmp], (tmp==DRUM));
             }
         }
-        else if (strcmp(cmd, "freq") == 0 && sscanf(line, "%*s %f %f", &f1, &f2)) skred_voice_set_freq(&v[voice], f1, f2);
-        else if (strcmp(cmd, "vol") == 0 && sscanf(line, "%*s %f %f", &f1, &f2)) skred_voice_set_vol(&v[voice], f1, f2);
-        else if (strcmp(cmd, "pan") == 0 && sscanf(line, "%*s %f %f", &f1, &f2)) skred_voice_set_pan(&v[voice], f1, f2);
-        else if (strcmp(cmd, "dir") == 0 && sscanf(line, "%*s %f %f", &f1, &f2)) skred_voice_set_dir(&v[voice], f1, f2);
-        else if (strcmp(cmd, "adsr") == 0 && sscanf(line, "%*s %f %f %f %f", &f1, &f2, &f3, &f4)) skred_voice_set_adsr(&v[voice], f1, f2, f3, f4);
-        else if (strcmp(cmd, "lfo") == 0 && sscanf(line, "%*s %f %f %f %f", &f1, &f2, &f3, &f4)) skred_voice_set_lfo(&v[voice], f1, f2, f3, f4);
+        else if (strcmp(cmd, "freq") == 0 && sscanf(line, "%*s %f %f", &f1[voice], &f2[voice])) skred_voice_set_freq(&v[voice], f1[voice], f2[voice]);
+        else if (strcmp(cmd, "midi") == 0 && sscanf(line, "%*s %f %f", &f1[voice], &f2[voice])) skred_voice_set_freq(&v[voice], midi2hz(f1[voice], 0), f2[voice]);
+        else if (strcmp(cmd, "vol") == 0 && sscanf(line, "%*s %f %f", &f1[voice], &f2[voice])) skred_voice_set_vol(&v[voice], f1[voice], f2[voice]);
+        else if (strcmp(cmd, "pan") == 0 && sscanf(line, "%*s %f %f", &f1[voice], &f2[voice])) skred_voice_set_pan(&v[voice], f1[voice], f2[voice]);
+        else if (strcmp(cmd, "dir") == 0 && sscanf(line, "%*s %f %f", &f1[voice], &f2[voice])) skred_voice_set_dir(&v[voice], f1[voice], f2[voice]);
+        else if (strcmp(cmd, "adsr") == 0 && sscanf(line, "%*s %f %f %f %f", &f1[voice], &f2[voice], &f3[voice], &f4[voice])) skred_voice_set_adsr(&v[voice], f1[voice], f2[voice], f3[voice], f4[voice]);
+        else if (strcmp(cmd, "lfo") == 0 && sscanf(line, "%*s %f %f %f %f", &f1[voice], &f2[voice], &f3[voice], &f4[voice])) skred_voice_set_lfo(&v[voice], f1[voice], f2[voice], f3[voice], f4[voice]);
         else if (strcmp(cmd, "lfo_wave") == 0 && sscanf(line, "%*s %d", &tmp)) { if(tmp>=0 && tmp<WMAX) skred_voice_set_lfo_wave(&v[voice], wd[tmp], ws[tmp]); }
-        else if (strcmp(cmd, "cut") == 0 && sscanf(line, "%*s %f", &f1)) {
-          f_node.cutoff = f1;
+        else if (strcmp(cmd, "cut") == 0 && sscanf(line, "%*s %f", &f1[voice])) {
+          f_node.cutoff = f1[voice];
           update_filter(&f_node, (float)sr);
           }
-        else if (strcmp(cmd, "res") == 0 && sscanf(line, "%*s %f", &f1)) {
-          f_node.resonance = f1;
+        else if (strcmp(cmd, "res") == 0 && sscanf(line, "%*s %f", &f1[voice])) {
+          f_node.resonance = f1[voice];
           update_filter(&f_node, (float)sr);
           }
-        else if (strcmp(cmd, "feed") == 0 && sscanf(line, "%*s %f", &f1)) { d_node.feedback = f1; }
-        else if (strcmp(cmd, "mix") == 0 && sscanf(line, "%*s %f", &f1)) { d_node.mix = f1; }
+        else if (strcmp(cmd, "feed") == 0 && sscanf(line, "%*s %f", &f1[voice])) { d_node.feedback = f1[voice]; }
+        else if (strcmp(cmd, "mix") == 0 && sscanf(line, "%*s %f", &f1[voice])) { d_node.mix = f1[voice]; }
         else if (strcmp(cmd, "route") == 0) {
             char target[32];
             sscanf(line, "%*s %31s", target);
