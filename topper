@@ -1,0 +1,14 @@
+HTOPRC_TEMP=$(mktemp) && cat <<EOF > "$HTOPRC_TEMP"
+fields=0 48 17 18 38 39 40 2 46 47 1
+sort_key=46
+sort_direction=-1
+hide_kernel_threads=1
+check_cpu_temperature=1
+show_cpu_usage=1
+show_cpu_frequency=1
+left_meters=AllCPUs2
+left_meter_modes=1
+right_meters=LoadAverage Tasks
+right_meter_modes=2 2
+EOF
+HTOPRC="$HTOPRC_TEMP" htop --filter "pipewire|wireplumber|your_app_name"; rm "$HTOPRC_TEMP"

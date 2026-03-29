@@ -1,3 +1,4 @@
+#define _XOPEN_SOURCE 500
 //#define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
 #include "skred_ds.h"
